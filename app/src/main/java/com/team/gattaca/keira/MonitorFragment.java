@@ -34,7 +34,7 @@ public class MonitorFragment extends Fragment {
                 "Glucose Level"
         };
         List<String> sampleMesurements = new ArrayList<String>(Arrays.asList(data));
-        ListView root = (ListView)inflater.inflate(R.layout.activity_main,container,false);
+        ListView root = (ListView)inflater.inflate(R.layout.monitor_fragment,container,false);
         root.setAdapter(new ArrayAdapter<String>(getActivity(), R.layout.list_item_measurement, sampleMesurements));
         return root;
 

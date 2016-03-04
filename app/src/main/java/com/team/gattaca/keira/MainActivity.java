@@ -13,6 +13,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         FragmentManager fragmentManager = getFragmentManager();
         FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.add(R.layout.activity_main,new MonitorFragment()).commit();
+        fragmentTransaction.add(R.id.container,new MonitorFragment()).commit();
     }
 }
