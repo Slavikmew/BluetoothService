@@ -26,16 +26,20 @@ public class MonitorFragment extends Fragment {
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
         String[] data = {
                 "Pulse",
                 "Blood Pressure",
                 "Body Temperature",
                 "Respiratory Rate",
-                "Glucose Level"
+                "Glucose Level",
+                "ECG",
+                "Cardiac Output"
         };
+
         List<String> sampleMesurements = new ArrayList<String>(Arrays.asList(data));
-        ListView root = (ListView)inflater.inflate(R.layout.monitor_fragment,container,false);
-        root.setAdapter(new ArrayAdapter<String>(getActivity(), R.layout.list_item_measurement, sampleMesurements));
+        ListView root = (ListView) inflater.inflate(R.layout.monitor_fragment, container, false);
+        root.setAdapter(new ArrayAdapter<String>(getActivity(), R.layout.list_item_parameter, sampleMesurements));
         return root;
 
     }
