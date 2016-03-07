@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/activity_main_menu">
+
+    <item
+        android:id="@+id/connect_scan_menu"
+        android:title="@string/connect_devices"
+        app:showAsAction="never"/>
+
+    <item
+        android:id="@+id/monitor_menu"
+        android:title="Monitor"
+        app:showAsAction="never"/>
+
+</menu>

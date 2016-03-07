@@ -7,9 +7,7 @@
     android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
-    android:id="@+id/monitor_list_view"
+    android:id="@+id/scan_list_view"
 
     tools:context="com.team.gattaca.keira.MainActivity"
-    tools:listitem="@layout/list_item_parameter" />
-
-
+    tools:listitem="@layout/list_item_device" />
