@@ -3,4 +3,5 @@
     <string name="connect_devices">Connect devices </string>
     <string name="select_device">Select device to connect</string>
     <string name="scan">Scan</string>
+    <string name="bluetooth_not_supported">Your device does not support bluetooth</string>
 </resources>

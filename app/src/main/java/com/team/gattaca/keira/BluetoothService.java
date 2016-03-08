@@ -4,7 +4,10 @@ import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
 import android.content.Intent;
 import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
+import android.os.Message;
 import android.support.annotation.Nullable;
 
 import java.util.UUID;
@@ -15,26 +18,30 @@ import java.util.UUID;
 public class BluetoothService extends Service {
 
     final static UUID MY_UUID = UUID.fromString("ziga_zaga_hoy_hoy_hoy");
-    private Handler mWorkerHandler;
-    private Handler mResponseHandler;
-    private BluetoothAdapter mBlueToothAdapter;
+    final static String TAG = "MyWorkerThread";
 
-    /*class MyWorkerThread extends HandlerThread{
-        public MyWorkerThread(String name, Handler.Callback callback) {
-            super(name);
-        }
-    }
-    */
+    private MyHandler mRequestHandler;
+    private Handler mResponseHandler;
+    private MyWorkerThread mWorkerThread;
+    private BluetoothAdapter mBluetoothAdapter;
 
     @Override
     public void onCreate() {
-        super.onCreate();
 
+        super.onCreate();
+        mWorkerThread = new MyWorkerThread();
+        mRequestHandler = mWorkerThread.getHandler();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        return super.onStartCommand(intent, flags, startId);
+        switch (intent.getAction()) {
+            case Constants.SCAN_ACTION:
+                mRequestHandler.obtainMessage(Constants.SCAN_ACTION_CODE, startId, 0).sendToTarget();
+                break;
+        }
+
+        return START_REDELIVER_INTENT;
     }
 
     @Override
@@ -47,4 +54,48 @@ public class BluetoothService extends Service {
     public IBinder onBind(Intent intent) {
         return null;
     }
+
+
+    class MyWorkerThread extends HandlerThread {
+
+        private MyHandler mHandler;
+
+        public MyWorkerThread() {
+            super(TAG);
+        }
+
+        public void prepareHandler() {
+            mHandler = new MyHandler(getLooper());
+
+        }
+
+        public MyHandler getHandler() {
+            return mHandler;
+        }
+
+    }
+
+    class MyHandler extends Handler {
+
+        public MyHandler(Looper looper) {
+            super(looper);
+        }
+
+        @Override
+        public void handleMessage(Message msg) {
+
+            super.handleMessage(msg);
+
+            switch (msg.what) {
+                case Constants.SCAN_ACTION_CODE:
+
+                    mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+            }
+
+
+            /*Обработка сообщения*/
+        }
+    }
+
 }

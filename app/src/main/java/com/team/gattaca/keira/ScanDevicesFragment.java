@@ -1,43 +1,89 @@
 package com.team.gattaca.keira;
 
-import android.support.v4.app.Fragment;
+import android.app.Activity;
+import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
+import android.widget.Toast;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.Set;
 
 /**
  * Created by Robert on 06.03.2016.
  */
 public class ScanDevicesFragment extends Fragment {
 
+    private static BluetoothAdapter mBluetoothAdapter;
+    private static final String TAG = "SCAN_FRAGMENT";
+    private static final int REQUEST_ENABLE_BT = 1;
+    private static ArrayAdapter<String> mArrayAdapter;
+
     @Override
     public void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
+
+        IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+        getContext().registerReceiver(mReceiver, filter);
+
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        if (mBluetoothAdapter == null) {
+            Toast.makeText(getContext(), getString(R.string.bluetooth_not_supported), Toast.LENGTH_LONG).show();
+            //протестировать методы остановки фрагмента
+        }
     }
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        String[] data = {
-                "Angel Sensor",
-                "Fitbit",
-                "Garmin"
-        };
 
-        setHasOptionsMenu(true);
 
-        List<String> list = new ArrayList<String>(Arrays.asList(data));
         View v = inflater.inflate(R.layout.scan_fragment, container, false);
         ListView listView = (ListView) v.findViewById(R.id.scan_list_view);
-        listView.setAdapter(new ArrayAdapter<String>(getActivity(), R.layout.list_item_device, list));
+        mArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_device);
+        listView.setAdapter(mArrayAdapter);
+
+        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+
+        if (mBluetoothAdapter.isEnabled()) {
+
+            Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+
+            for (BluetoothDevice device : pairedDevices) {
+                mArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+            }
+        } else {
+            Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+            getActivity().startActivityForResult(enableBtIntent, REQUEST_ENABLE_BT);
+        }
+
+        v.findViewById(R.id.scan_button).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if (mBluetoothAdapter.isDiscovering()) {
+                    mBluetoothAdapter.cancelDiscovery();
+                }
+                mBluetoothAdapter.startDiscovery();
+            }
+        });
+               /*
+                Intent scanIntent = new Intent(getActivity(), BluetoothService.class);
+                scanIntent.setAction(Constants.SCAN_ACTION);
+                getContext().startService(scanIntent);
+              }*/
         return v;
     }
 
@@ -48,5 +94,36 @@ public class ScanDevicesFragment extends Fragment {
         menu.findItem(R.id.connect_scan_menu).setVisible(false);
         menu.findItem(R.id.connect_scan_menu).setEnabled(false);
     }
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (mBluetoothAdapter != null) {
+            mBluetoothAdapter.cancelDiscovery();
+        }
+
+        getContext().unregisterReceiver(mReceiver);
+    }
+
+    @Override
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+
+        switch (requestCode) {
+            case REQUEST_ENABLE_BT:
+                if (resultCode == Activity.RESULT_OK) mBluetoothAdapter.startDiscovery();
+        }
+    }
+
+    private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+
+        public void onReceive(Context context, Intent intent) {
+            String action = intent.getAction();
+            if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+                BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+                mArrayAdapter.add(device.getName() + "\n" + device.getAddress());
+            }
+        }
+    };
 
 }

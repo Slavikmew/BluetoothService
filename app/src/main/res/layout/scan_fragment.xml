@@ -22,7 +22,7 @@
         android:layout_height="match_parent"
         android:layout_weight="5"
         android:text="@string/scan"
-        android:id="@+id/button"
+        android:id="@+id/scan_button"
         android:layout_gravity="center_horizontal" />
 
 </LinearLayout>
