@@ -1,13 +1,17 @@
 package com.team.gattaca.keira;
 
+import android.Manifest;
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
 import android.os.Bundle;
+import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.Menu;
@@ -27,6 +31,7 @@ public class ScanDevicesFragment extends Fragment {
     private static BluetoothAdapter mBluetoothAdapter;
     private static final String TAG = "SCAN_FRAGMENT";
     private static final int REQUEST_ENABLE_BT = 1;
+    private static final int REQUEST_COARSE_LOCATION_PERMISSIONS = 2;
     private static ArrayAdapter<String> mArrayAdapter;
 
     @Override
@@ -38,7 +43,8 @@ public class ScanDevicesFragment extends Fragment {
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         getContext().registerReceiver(mReceiver, filter);
 
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+        mBluetoothAdapter = ((BluetoothManager)getContext().getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
+
         if (mBluetoothAdapter == null) {
             Toast.makeText(getContext(), getString(R.string.bluetooth_not_supported), Toast.LENGTH_LONG).show();
             //протестировать методы остановки фрагмента
@@ -50,13 +56,10 @@ public class ScanDevicesFragment extends Fragment {
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
 
-
         View v = inflater.inflate(R.layout.scan_fragment, container, false);
         ListView listView = (ListView) v.findViewById(R.id.scan_list_view);
         mArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_device);
         listView.setAdapter(mArrayAdapter);
-
-        mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
 
         if (mBluetoothAdapter.isEnabled()) {
 
@@ -76,7 +79,9 @@ public class ScanDevicesFragment extends Fragment {
                 if (mBluetoothAdapter.isDiscovering()) {
                     mBluetoothAdapter.cancelDiscovery();
                 }
-                mBluetoothAdapter.startDiscovery();
+
+
+                doDiscovery();
             }
         });
                /*
@@ -125,5 +130,28 @@ public class ScanDevicesFragment extends Fragment {
             }
         }
     };
+
+    public void doDiscovery() {
+        int hasPermission = ActivityCompat.checkSelfPermission(getContext(), Manifest.permission.ACCESS_COARSE_LOCATION);
+        if (hasPermission == PackageManager.PERMISSION_GRANTED) {
+            mBluetoothAdapter.startDiscovery();
+            return;
+        }
+        ActivityCompat.requestPermissions(getActivity(),
+                new String[]{android.Manifest.permission.ACCESS_COARSE_LOCATION},
+                REQUEST_COARSE_LOCATION_PERMISSIONS);
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case REQUEST_COARSE_LOCATION_PERMISSIONS: {
+                if (grantResults.length == 1 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    doDiscovery();
+                }
+                return;
+            }
+        }
+    }
 
 }
