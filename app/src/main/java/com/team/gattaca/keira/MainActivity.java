@@ -18,9 +18,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.main_activity);
         setSupportActionBar((Toolbar) findViewById(R.id.my_toolbar));
 
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
-        fragmentTransaction.add(R.id.container, new MonitorFragment()).commit();
+        if (savedInstanceState == null) {
+            FragmentManager fragmentManager = getSupportFragmentManager();
+            FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
+            fragmentTransaction.replace(R.id.container, new MonitorFragment()).commit();
+        }
     }
 
     @Override

@@ -43,7 +43,7 @@ public class ScanDevicesFragment extends Fragment {
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {
-        
+
         super.onPrepareOptionsMenu(menu);
         menu.findItem(R.id.connect_scan_menu).setVisible(false);
         menu.findItem(R.id.connect_scan_menu).setEnabled(false);
