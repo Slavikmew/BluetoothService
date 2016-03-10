@@ -17,6 +17,7 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.ListView;
 import android.widget.Toast;
@@ -26,13 +27,14 @@ import java.util.Set;
 /**
  * Created by Robert on 06.03.2016.
  */
-public class ScanDevicesFragment extends Fragment {
+public class ScanDevicesFragment extends Fragment implements AdapterView.OnItemClickListener {
 
     private static BluetoothAdapter mBluetoothAdapter;
     private static final String TAG = "SCAN_FRAGMENT";
     private static final int REQUEST_ENABLE_BT = 1;
     private static final int REQUEST_COARSE_LOCATION_PERMISSIONS = 2;
     private static ArrayAdapter<String> mArrayAdapter;
+    private static ListView listView;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -43,7 +45,7 @@ public class ScanDevicesFragment extends Fragment {
         IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
         getContext().registerReceiver(mReceiver, filter);
 
-        mBluetoothAdapter = ((BluetoothManager)getContext().getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
+        mBluetoothAdapter = ((BluetoothManager) getContext().getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
 
         if (mBluetoothAdapter == null) {
             Toast.makeText(getContext(), getString(R.string.bluetooth_not_supported), Toast.LENGTH_LONG).show();
@@ -55,11 +57,11 @@ public class ScanDevicesFragment extends Fragment {
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-
         View v = inflater.inflate(R.layout.scan_fragment, container, false);
-        ListView listView = (ListView) v.findViewById(R.id.scan_list_view);
+        listView = (ListView) v.findViewById(R.id.scan_list_view);
         mArrayAdapter = new ArrayAdapter<String>(getActivity(), R.layout.list_item_device);
         listView.setAdapter(mArrayAdapter);
+        listView.setOnItemClickListener(this);
 
         if (mBluetoothAdapter.isEnabled()) {
 
@@ -79,11 +81,16 @@ public class ScanDevicesFragment extends Fragment {
                 if (mBluetoothAdapter.isDiscovering()) {
                     mBluetoothAdapter.cancelDiscovery();
                 }
-
-
                 doDiscovery();
+                /*
+                Intent connectIntent = new Intent(getContext(), BluetoothService.class);
+                connectIntent.setAction(Constants.CONNECT_ACTION);
+                getContext().startService(connectIntent);*/
             }
         });
+
+
+
                /*
                 Intent scanIntent = new Intent(getActivity(), BluetoothService.class);
                 scanIntent.setAction(Constants.SCAN_ACTION);
@@ -91,6 +98,20 @@ public class ScanDevicesFragment extends Fragment {
               }*/
         return v;
     }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+
+        mBluetoothAdapter.cancelDiscovery();
+        String item = (String)parent.getItemAtPosition(position);
+        Intent connectIntent = new Intent(getContext(), BluetoothService.class);
+        connectIntent.setAction(Constants.CONNECT_ACTION);
+        connectIntent.putExtra("device_name", item.split("\n+")[0]);
+        connectIntent.putExtra("address", item.split("\n+")[1]);
+        getContext().startService(connectIntent);
+
+    }
+
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {

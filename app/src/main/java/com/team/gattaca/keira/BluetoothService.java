@@ -2,7 +2,12 @@ package com.team.gattaca.keira;
 
 import android.app.Service;
 import android.bluetooth.BluetoothAdapter;
+import android.bluetooth.BluetoothDevice;
+import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothSocket;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.os.IBinder;
@@ -10,6 +15,9 @@ import android.os.Looper;
 import android.os.Message;
 import android.support.annotation.Nullable;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.UUID;
 
 /**
@@ -17,28 +25,30 @@ import java.util.UUID;
  */
 public class BluetoothService extends Service {
 
-    final static UUID MY_UUID = UUID.fromString("ziga_zaga_hoy_hoy_hoy");
+    final static UUID MY_UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
     final static String TAG = "MyWorkerThread";
 
-    private MyHandler mRequestHandler;
-    private Handler mResponseHandler;
-    private MyWorkerThread mWorkerThread;
-    private BluetoothAdapter mBluetoothAdapter;
+    private MyHandler mConnectHandler;
+    private MyHandler mConnectedHandler;
+    private MyWorkerThread mConnect;
+    private MyWorkerThread mConnectedThread;
+    private static BluetoothAdapter mBluetoothAdapter;
+   // private BluetoothDevice mBluetoothDevice;
+   // private BluetoothSocket mBluetoothSocket;
 
     @Override
     public void onCreate() {
-
-        super.onCreate();
-        mWorkerThread = new MyWorkerThread();
-        mRequestHandler = mWorkerThread.getHandler();
+        mConnect = new MyWorkerThread();
+        mConnect.start();
+        mConnect.prepareHandler();
+        mConnectHandler = mConnect.mHandler;
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         switch (intent.getAction()) {
-            case Constants.SCAN_ACTION:
-                mRequestHandler.obtainMessage(Constants.SCAN_ACTION_CODE, startId, 0).sendToTarget();
-                break;
+            case Constants.CONNECT_ACTION:
+                mConnectHandler.obtainMessage(Constants.CONNECT_ACTION_CODE, startId, 0, intent.getExtras()).sendToTarget();
         }
 
         return START_REDELIVER_INTENT;
@@ -58,7 +68,7 @@ public class BluetoothService extends Service {
 
     class MyWorkerThread extends HandlerThread {
 
-        private MyHandler mHandler;
+        public MyHandler mHandler;
 
         public MyWorkerThread() {
             super(TAG);
@@ -66,13 +76,7 @@ public class BluetoothService extends Service {
 
         public void prepareHandler() {
             mHandler = new MyHandler(getLooper());
-
         }
-
-        public MyHandler getHandler() {
-            return mHandler;
-        }
-
     }
 
     class MyHandler extends Handler {
@@ -87,14 +91,53 @@ public class BluetoothService extends Service {
             super.handleMessage(msg);
 
             switch (msg.what) {
-                case Constants.SCAN_ACTION_CODE:
+                case Constants.CONNECT_ACTION_CODE:
+                    mBluetoothAdapter = ((BluetoothManager) getApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
+                    BluetoothDevice mBluetoothDevice = mBluetoothAdapter.getRemoteDevice(((Bundle) msg.obj).getString("address"));
+                    BluetoothSocket mBluetoothSocket = null;
+                    try {
 
-                    mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
+                        mBluetoothSocket = mBluetoothDevice.createRfcommSocketToServiceRecord(MY_UUID);
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                    }
+                    try {
+                        mBluetoothSocket.connect();
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        try {
+                            mBluetoothSocket.close();
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        }
+                    }
+                    break;
+
+                case Constants.CONNECTED_ACTION_CODE:
+                    BluetoothSocket connectedSocket = ((BluetoothSocket) msg.obj);
+                    mConnectedThread = new MyWorkerThread();
+                    mConnectedThread.start();
+                    mConnectedThread.prepareHandler();
+
+                    try (InputStream inputStream = ((BluetoothSocket) msg.obj).getInputStream();
+                         OutputStream outputStream = ((BluetoothSocket) msg.obj).getOutputStream()
+                    ) {
+
+                        /*Data transfer*/
+
+                    } catch (IOException e) {
+                        e.printStackTrace();
+                        try {
+                            connectedSocket.close();
+                        } catch (IOException e1) {
+                            e1.printStackTrace();
+                        }
+                        mConnectedThread.quitSafely();
+                    }
+
 
             }
 
-
-            /*Обработка сообщения*/
         }
     }
 
