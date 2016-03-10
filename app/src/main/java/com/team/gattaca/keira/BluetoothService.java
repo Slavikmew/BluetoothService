@@ -28,26 +28,14 @@ public class BluetoothService extends Service {
     final static UUID MY_UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
     final static String TAG = "MyWorkerThread";
 
-    private MyHandler mConnectHandler;
-    private MyHandler mConnectedHandler;
-    private MyWorkerThread mConnect;
-    private MyWorkerThread mConnectedThread;
-    private static BluetoothAdapter mBluetoothAdapter;
-   // private BluetoothDevice mBluetoothDevice;
-   // private BluetoothSocket mBluetoothSocket;
-
-    @Override
-    public void onCreate() {
-        mConnect = new MyWorkerThread();
-        mConnect.start();
-        mConnect.prepareHandler();
-        mConnectHandler = mConnect.mHandler;
-    }
-
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         switch (intent.getAction()) {
             case Constants.CONNECT_ACTION:
+                MyWorkerThread mConnect = new MyWorkerThread();
+                mConnect.start();
+                mConnect.prepareHandler();
+                MyHandler mConnectHandler = mConnect.mHandler;
                 mConnectHandler.obtainMessage(Constants.CONNECT_ACTION_CODE, startId, 0, intent.getExtras()).sendToTarget();
         }
 
@@ -92,7 +80,7 @@ public class BluetoothService extends Service {
 
             switch (msg.what) {
                 case Constants.CONNECT_ACTION_CODE:
-                    mBluetoothAdapter = ((BluetoothManager) getApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
+                    BluetoothAdapter mBluetoothAdapter = ((BluetoothManager) getApplicationContext().getSystemService(Context.BLUETOOTH_SERVICE)).getAdapter();
                     BluetoothDevice mBluetoothDevice = mBluetoothAdapter.getRemoteDevice(((Bundle) msg.obj).getString("address"));
                     BluetoothSocket mBluetoothSocket = null;
                     try {
@@ -100,6 +88,7 @@ public class BluetoothService extends Service {
                         mBluetoothSocket = mBluetoothDevice.createRfcommSocketToServiceRecord(MY_UUID);
                     } catch (IOException e) {
                         e.printStackTrace();
+                        stopSelf(msg.arg1);
                     }
                     try {
                         mBluetoothSocket.connect();
@@ -110,14 +99,20 @@ public class BluetoothService extends Service {
                         } catch (IOException e1) {
                             e1.printStackTrace();
                         }
+                        stopSelf(msg.arg1);
                     }
+
+                    MyWorkerThread mConnectedThread = new MyWorkerThread();
+                    mConnectedThread.start();
+                    mConnectedThread.prepareHandler();
+                    MyHandler mConnectedHandler = mConnectedThread.mHandler;
+                    mConnectedHandler.obtainMessage(Constants.CONNECTED_ACTION_CODE, mBluetoothSocket).sendToTarget();
+
+                    this.getLooper().getThread().interrupt();
                     break;
 
                 case Constants.CONNECTED_ACTION_CODE:
                     BluetoothSocket connectedSocket = ((BluetoothSocket) msg.obj);
-                    mConnectedThread = new MyWorkerThread();
-                    mConnectedThread.start();
-                    mConnectedThread.prepareHandler();
 
                     try (InputStream inputStream = ((BluetoothSocket) msg.obj).getInputStream();
                          OutputStream outputStream = ((BluetoothSocket) msg.obj).getOutputStream()
@@ -132,10 +127,10 @@ public class BluetoothService extends Service {
                         } catch (IOException e1) {
                             e1.printStackTrace();
                         }
-                        mConnectedThread.quitSafely();
+
                     }
 
-
+                    this.getLooper().getThread().interrupt();
             }
 
         }
