@@ -1,6 +1,7 @@
 package com.team.gattaca.keira;
 
 import android.content.ComponentName;
+import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
@@ -14,6 +15,10 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
+
+import com.team.gattaca.keira.db.HealthContract;
+
+import java.util.Calendar;
 
 
 public class MainActivity extends AppCompatActivity implements BluetoothService.Callback {
@@ -98,9 +103,20 @@ public class MainActivity extends AppCompatActivity implements BluetoothService.
         Toast.makeText(this, "Can not connect!", Toast.LENGTH_LONG).show();
     }
 
-    public void onDataReceived(String data) {
+    public void onDataReceived(DataAtom data) {
 
-        Toast.makeText(this, data, Toast.LENGTH_LONG);
+        ContentValues temp = new ContentValues();
+        Calendar calendar = Calendar.getInstance();
+        String time = calendar.getTime().toString();
+        temp.put(HealthContract.BodyTemperatureEntry.COLUMN_DATE, time);
+        temp.put(HealthContract.BodyTemperatureEntry.COLUMN_TEMP, data.getTemperatute());
+
+        this.getContentResolver().insert(HealthContract.BodyTemperatureEntry.CONTENT_URI, temp);
+
+        ContentValues pulse = new ContentValues();
+        pulse.put(HealthContract.PulseEntry.COLUMN_DATE, time);
+        pulse.put(HealthContract.PulseEntry.COLUMN_PULSE, data.getPulse());
+        Toast.makeText(this, data.getPulse() + " " + data.getTemperatute(), Toast.LENGTH_LONG).show();
     }
 
 /*

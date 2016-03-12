@@ -21,6 +21,12 @@
             android:name=".BluetoothService"
             android:exported="false">
         </service>
+        <provider
+            android:authorities="com.team.gattaca.keira.db"
+            android:name=".db.HealthProvider"
+            >
+
+        </provider>
     </application>
 
 </manifest>

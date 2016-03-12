@@ -31,7 +31,7 @@ public class BluetoothService extends Service {
     private Handler mResponseHandler;
 
     public interface Callback {
-        public void onDataReceived(String data);
+        public void onDataReceived(DataAtom data);
 
         public void onBluetoothError();
     }
@@ -157,7 +157,7 @@ public class BluetoothService extends Service {
 
                                         @Override
                                         public void run() {
-                                            mCallback.onDataReceived(result.getPulse() + " " + result.getTemperatute());
+                                            mCallback.onDataReceived(result);
                                         }
                                     });
                                 }
