@@ -109,9 +109,7 @@ public class ScanDevicesFragment extends Fragment implements AdapterView.OnItemC
         connectIntent.putExtra("device_name", item.split("\n+")[0]);
         connectIntent.putExtra("address", item.split("\n+")[1]);
         getContext().startService(connectIntent);
-
     }
-
 
     @Override
     public void onPrepareOptionsMenu(Menu menu) {

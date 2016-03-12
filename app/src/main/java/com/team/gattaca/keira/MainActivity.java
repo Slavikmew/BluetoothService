@@ -1,15 +1,25 @@
 package com.team.gattaca.keira;
 
+import android.content.ComponentName;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.IBinder;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
 
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements BluetoothService.Callback {
+
+    public BluetoothService mBluetoothService;
+    private Boolean mBound;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -22,6 +32,24 @@ public class MainActivity extends AppCompatActivity {
             FragmentManager fragmentManager = getSupportFragmentManager();
             FragmentTransaction fragmentTransaction = fragmentManager.beginTransaction();
             fragmentTransaction.replace(R.id.container, new MonitorFragment()).commit();
+        }
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        bindService(new Intent(this, BluetoothService.class), mServiceConnection,
+                Context.BIND_AUTO_CREATE);
+    }
+
+    @Override
+    protected void onStop() {
+
+        super.onStop();
+        if (mBound){
+            unbindService(mServiceConnection);
+            mBound = false;
         }
     }
 
@@ -47,6 +75,32 @@ public class MainActivity extends AppCompatActivity {
         }
 
 
+    }
+
+    private ServiceConnection mServiceConnection = new ServiceConnection() {
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+
+            BluetoothService.LocalBinder binder = (BluetoothService.LocalBinder)service;
+            mBluetoothService = binder.getService();
+            mBluetoothService.registerClient( MainActivity.this, new Handler());
+        }
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+
+            mBound = false;
+        }
+    };
+
+    public void onBluetoothError() {
+
+        Toast.makeText(this, "Can not connect!", Toast.LENGTH_LONG).show();
+    }
+
+    public void onDataReceived(String data) {
+
+        Toast.makeText(this, data, Toast.LENGTH_LONG);
     }
 
 /*
